@@ -197,7 +197,8 @@ local function BuildAlertGroups(cooldownID)
         for index, option in ipairs(borders) do
             local optionIndex = index
             local optionValue = option
-            local label = optionValue.name or ("Border " .. tostring(optionIndex))
+            local frameLevelAndName = string.format("%s | Frame Level: %s", tostring(option.name or ""), tostring(optionValue.frameLevel))
+            local label = optionValue.name and frameLevelAndName or ("Border " .. tostring(optionIndex))
             borderEntries[#borderEntries + 1] = {
                 text = label,
                 alert = optionValue,

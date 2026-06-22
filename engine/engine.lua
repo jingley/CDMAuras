@@ -1,24 +1,37 @@
 -------------------------------------------------------------------------------
 --  Engine for all logic
---  Built myself hooked into the CDM and certain events to pass only necessary information for processing to alerts. I also didn't want multiple frames listening for blizz events
+--  Hooked into the CDM and certain events to pass only necessary information for processing to alerts. I also didn't want multiple frames listening for blizz events
 -------------------------------------------------------------------------------
 local _, ns = ...
 local Engine = {}
 ns.Engine = Engine
-local API = {}
-Engine.API = API
-local events = {}
-local contextIndex = {}
+local eventFrame = CreateFrame("Frame", nil)
+local GetAuraDuration, hooksecurefunc, table, C_Spell, GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDuration, hooksecurefunc, table, C_Spell, C_UnitAuras.GetAuraDataByAuraInstanceID
 local aurasCache = {}
 local auraInstanceIDCache = {}
 local cooldownCache = {}
-local GetAuraDuration, hooksecurefunc, table, C_Spell, GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDuration, hooksecurefunc, table, C_Spell, C_UnitAuras.GetAuraDataByAuraInstanceID
 local trackedCooldowns = {}
 local spellIDToCooldownIDMap = {}
 local registeredForSpellUpdate = {}
-local eventFrame = CreateFrame("Frame", nil)
 local emptyAura = {}
 local targetAuras = {}
+local registeredForTargetAuras = false
+
+local HandleTargetAuras = function(cooldownID, active)
+	if active then
+		targetAuras[cooldownID] = true
+		if not registeredForTargetAuras then
+			eventFrame:RegisterUnitEvent("UNIT_AURA", "player", "target")
+			registeredForTargetAuras = true
+		end
+	elseif not active then
+		targetAuras[cooldownID] = nil
+		if registeredForTargetAuras then
+			eventFrame:RegisterUnitEvent("UNIT_AURA", "player")
+			registeredForTargetAuras = false
+		end
+	end
+end
 
 -- Start helper functions
 local BuildAuraData = function(cooldownID, auraInstanceID, unit)
@@ -28,8 +41,8 @@ local BuildAuraData = function(cooldownID, auraInstanceID, unit)
 		aurasCache[cooldownID] = auraData
 	end
 	auraData.unit = auraData.unit or unit
-	if auraData.unit == "target" and not targetAuras[cooldownID] then
-		targetAuras[cooldownID] = true
+	if auraData.unit == "target" then
+		HandleTargetAuras(cooldownID, true)
 	end
 
 	auraData.auraInstanceID = auraInstanceID
@@ -59,7 +72,9 @@ local CDMA_AURA_REMOVE = function(cooldownID)
 		if not currentAura then return end
 		auraInstanceIDCache[currentAura.auraInstanceID] = nil
 		aurasCache[cooldownID] = nil
-		targetAuras[cooldownID] = nil
+		if currentAura.unit == "target" then
+			HandleTargetAuras(cooldownID, true)
+		end
 		API.SendInternalMessage("CDMA_AURA_REMOVE", cooldownID)
 	end
 end
@@ -240,7 +255,7 @@ function API:StartEngine()
 	eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_START", "player")
 	eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_STOP", "player")
 	eventFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-	eventFrame:RegisterUnitEvent("UNIT_AURA", "player", "target")
+	eventFrame:RegisterUnitEvent("UNIT_AURA", "player")
 	eventFrame:SetScript("OnEvent", function(self, event, ...)
 		if event == "UNIT_AURA" then
 			UNIT_AURA(event, ...)
@@ -299,6 +314,11 @@ API.IsSpellOnCooldown = function(cooldownID)
 end
 
 -- Start Internal Event Publishing
+local API = {}
+Engine.API = API
+local events = {}
+local contextIndex = {}
+
 API.RegisterInternalMessage = function(event, func, frame)
     if not events[event] then events[event] = {} end
     local listener = {f = func, c = frame, event = event, i = #events[event] + 1}
