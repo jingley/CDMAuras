@@ -703,7 +703,7 @@ function RebuildEditorFields(alertObject)
         warn:SetPoint("TOPLEFT", editorContent, "TOPLEFT", PAD, -yOff)
         warn:SetWidth(FIELD_W)
         warn:SetJustifyH("LEFT")
-        warn:SetText("|cFFFFCC44\u26a0|r  Only buffs that track stack counts are supported.\nBuffs without stacks will not activate this condition.")
+        warn:SetText("Only buffs that track stack counts are supported.\nBuffs without stacks will not activate this condition.")
         warn:SetTextColor(C_STACKS_ACCENT[1], C_STACKS_ACCENT[2], C_STACKS_ACCENT[3], 1)
         yOff = yOff + warn:GetStringHeight() + 10
         local buffEntries = GetBuffEntries()

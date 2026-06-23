@@ -5,6 +5,8 @@
 local _, ns = ...
 local Engine = {}
 ns.Engine = Engine
+local API = {}
+Engine.API = API
 local eventFrame = CreateFrame("Frame", nil)
 local GetAuraDuration, hooksecurefunc, table, C_Spell, GetAuraDataByAuraInstanceID = C_UnitAuras.GetAuraDuration, hooksecurefunc, table, C_Spell, C_UnitAuras.GetAuraDataByAuraInstanceID
 local aurasCache = {}
@@ -314,8 +316,6 @@ API.IsSpellOnCooldown = function(cooldownID)
 end
 
 -- Start Internal Event Publishing
-local API = {}
-Engine.API = API
 local events = {}
 local contextIndex = {}
 
