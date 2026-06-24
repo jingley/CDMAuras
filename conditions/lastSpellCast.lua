@@ -6,11 +6,15 @@ local LastSpellCast = {}
 ns.LastSpellCast = LastSpellCast
 
 local CDMA_SUCCEEDED_SPELLCAST = function(self, spellID)
-    if spellID == self.triggeringSpellID and not self.isActive then
+    if not self.alert then return end
+    local shouldBeActive = spellID == self.triggeringSpellID
+    if shouldBeActive and not self.isActive then
         self.alert:UpdateConditions(self, true)
-    elseif spellID ~= self.triggeringSpellID and self.isActive then
+    elseif not shouldBeActive and self.isActive then
         self.alert:UpdateConditions(self, false)
     end
+
+    self.isActive = shouldBeActive
 end
 
 function LastSpellCast:Initialize(options, alert)
@@ -22,5 +26,6 @@ end
 function LastSpellCast:Destroy()
     CDMA_SUCCEEDED_SPELLCAST(self, -1)
     self.isActive = nil
+    self.triggeringSpellID = nil
     self.alert = nil
 end

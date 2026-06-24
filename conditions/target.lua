@@ -6,6 +6,7 @@ local Target = {}
 ns.Target = Target
 
 local CDMA_TARGET_CHANGED = function(self, hasTarget)
+    if not self.alert then return end
     local shouldBeActive = self.negate and not hasTarget or (not self.negate and hasTarget)
     if shouldBeActive then
         if not self.isActive then
@@ -16,12 +17,14 @@ local CDMA_TARGET_CHANGED = function(self, hasTarget)
             self.alert:UpdateConditions(self, false)
         end
     end
+    self.isActive = shouldBeActive
 end
 
 function Target:Initialize(options, alert)
     self.alert  = alert
     self.negate = options.negate == true
     ns.Engine.API.RegisterInternalMessage("CDMA_TARGET_CHANGED", CDMA_TARGET_CHANGED, self)
+    CDMA_TARGET_CHANGED(self, UnitExists("target"))
 end
 
 function Target:Destroy()
