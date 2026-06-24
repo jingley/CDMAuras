@@ -1,0 +1,34 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build release zip
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          ZIP_NAME="CDMAuras_${TAG}.zip"
+
+          # git archive respects export-ignore entries in .gitattributes.
+          # The --prefix flag wraps everything inside a CDMAuras/ folder so
+          # the zip extracts cleanly into Interface/AddOns/CDMAuras.
+          git archive --format=zip --prefix=CDMAuras/ "${TAG}" -o "${ZIP_NAME}"
+
+          echo "ZIP_NAME=${ZIP_NAME}" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3.0.1
+        with:
+          files: ${{ env.ZIP_NAME }}
+          generate_release_notes: false

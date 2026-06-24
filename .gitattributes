@@ -1,0 +1,4 @@
+# Files to exclude from release archives (git archive / export)
+README.md               export-ignore
+.gitattributes          export-ignore
+.github/                export-ignore
